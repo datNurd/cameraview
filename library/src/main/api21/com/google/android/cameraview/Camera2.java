@@ -34,6 +34,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
+import android.os.Handler;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -474,17 +475,22 @@ class Camera2 extends CameraViewImpl {
         if (!isCameraOpened() || !mPreview.isReady() || mImageReader == null) {
             return;
         }
-        Size previewSize = chooseOptimalSize();
+        previewSize = chooseOptimalSize();
         mPreview.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
-        Surface surface = mPreview.getSurface();
-        try {
-            mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
-            mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                    mSessionCallback, null);
-        } catch (CameraAccessException e) {
-            throw new RuntimeException("Failed to start camera session");
-        }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Surface surface = mPreview.getSurface();
+                    mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                    mPreviewRequestBuilder.addTarget(surface);
+                    mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+                            mSessionCallback, mBackgroundHandler);
+                } catch (CameraAccessException e) {
+                    throw new RuntimeException("Failed to start camera session");
+                }
+            }
+        }, 500);
     }
 
     /**
