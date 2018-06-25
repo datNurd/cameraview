@@ -30,11 +30,11 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
-import android.os.Handler;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -475,7 +475,7 @@ class Camera2 extends CameraViewImpl {
         if (!isCameraOpened() || !mPreview.isReady() || mImageReader == null) {
             return;
         }
-        previewSize = chooseOptimalSize();
+        Size previewSize = chooseOptimalSize();
         mPreview.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -485,12 +485,13 @@ class Camera2 extends CameraViewImpl {
                     mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                     mPreviewRequestBuilder.addTarget(surface);
                     mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                            mSessionCallback, mBackgroundHandler);
+                            mSessionCallback, null);
                 } catch (CameraAccessException e) {
+                    Log.d("Camera2", e.getMessage());
                     throw new RuntimeException("Failed to start camera session");
                 }
             }
-        }, 500);
+        },500);
     }
 
     /**
